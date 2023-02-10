@@ -4,7 +4,9 @@ import urllib.request  # Hacer llamadas http a paginas de la red
 import tsplib95  # Modulo para las instancias del problema del TSP
 import math  # Modulo de funciones matematicas. Se usa para exp
 import random  # Para generar valores aleatorios
-
+import os
+from IPython.display import display
+import matplotlib.pyplot as plt
 
 # http://elib.zib.de/pub/mp-testdata/tsp/tsplib/
 # Documentacion :
@@ -14,7 +16,21 @@ import random  # Para generar valores aleatorios
 # https://pypi.org/project/tsplib95/
 
 # Descargamos el fichero de datos(Matriz de distancias)
-file = "swiss42.tsp"
+problemas = {
+    "burma14.tsp": "http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/tsp/burma14.tsp.gz",
+    "gr24.tsp": "http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/tsp/gr24.tsp.gz",
+    "swiss42.tsp": "http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/tsp/swiss42.tsp.gz",
+    "pr76.tsp": "http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/tsp/pr76.tsp.gz",
+    "kroB100.tsp": "http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/tsp/kroB100.tsp.gz",
+}
+for file in problemas.keys():
+    try:
+        if not os.path.exists(f'./{file}'):
+            urllib.request.urlretrieve(problemas[file], file + '.gz')
+            # Descomprimir el fichero de datos
+            result = os.system(f'gzip -d {file}')
+    except:
+        pass
 # urllib.request.urlretrieve("http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/tsp/swiss42.tsp.gz", file + '.gz')
 # !gzip -d swiss42.tsp.gz     #Descomprimir el fichero de datos
 
@@ -25,21 +41,21 @@ file = "swiss42.tsp"
 # file = "att48.tsp" ; urllib.request.urlretrieve("http://comopt.ifi.uni-heidelberg.de/software/TSPLIB95/tsp/att48.tsp.gz", file)
 
 
-# Carga de datos y generación de objeto problem
-###############################################################################
-problem = tsplib95.load(file)
+# # Carga de datos y generación de objeto problem
+# ###############################################################################
+# problem = tsplib95.load(file)
 
-# Nodos
-Nodos = list(problem.get_nodes())
+# # Nodos
+# nodos = list(problem.get_nodes())
 
-# Aristas
-Aristas = list(problem.get_edges())
+# # Aristas
+# Aristas = list(problem.get_edges())
 
 
-# Probamos algunas funciones del objeto problem
+# # Probamos algunas funciones del objeto problem
 
-# Distancia entre nodos
-problem.get_weight(0, 1)
+# # Distancia entre nodos
+# problem.get_weight(0, 1)
 
 # Todas las funciones
 # Documentación: https://tsplib95.readthedocs.io/en/v0.6.1/modules.html
@@ -48,15 +64,15 @@ problem.get_weight(0, 1)
 
 
 # Funcionas basicas
-###############################################################################
+##############################################################################
 
-# # Se genera una solucion aleatoria con comienzo en en el nodo 0
-# def crear_solucion(Nodos):
-#     solucion = [Nodos[0]]
-#     for n in Nodos[1:]:
-#         solucion = solucion + \
-#             [random.choice(list(set(Nodos) - set({Nodos[0]}) - set(solucion)))]
-#     return solucion
+# Se genera una solucion aleatoria con comienzo en en el nodo 0
+def crear_solucion(Nodos):
+    solucion = [Nodos[0]]
+    for n in Nodos[1:]:
+        solucion = solucion + \
+            [random.choice(list(set(Nodos) - set({Nodos[0]}) - set(solucion)))]
+    return solucion
 
 # # Devuelve la distancia entre dos nodos
 
@@ -72,39 +88,6 @@ problem.get_weight(0, 1)
 #     for i in range(len(solucion)-1):
 #         distancia_total += distancia(solucion[i], solucion[i+1],  problem)
 #     return distancia_total + distancia(solucion[len(solucion)-1], solucion[0], problem)
-
-
-# ###############################################################################
-# # BUSQUEDA ALEATORIA
-# ###############################################################################
-# # region busqueda aleatoria
-# def busqueda_aleatoria(problem, N):
-#     # N es el numero de iteraciones
-#     Nodos = list(problem.get_nodes())
-
-#     mejor_solucion = []
-#     # mejor_distancia = 10e100                         #Inicializamos con un valor alto
-#     mejor_distancia = float('inf')  # Inicializamos con un valor alto
-
-#     for i in range(N):  # Criterio de parada: repetir N veces pero podemos incluir otros
-#         solucion = crear_solucion(Nodos)  # Genera una solucion aleatoria
-#         # Calcula el valor objetivo(distancia total)
-#         distancia = distancia_total(solucion, problem)
-
-#         if distancia < mejor_distancia:  # Compara con la mejor obtenida hasta ahora
-#             mejor_solucion = solucion
-#             mejor_distancia = distancia
-
-#     print("Mejor solución:", mejor_solucion)
-#     print("Distancia     :", mejor_distancia)
-#     return mejor_solucion
-
-
-# # Busqueda aleatoria con 5000 iteraciones
-# # solucion = busqueda_aleatoria(problem, 10000)
-# # print(solucion)
-# # print()
-# # endregion
 
 
 # ###############################################################################
@@ -133,8 +116,6 @@ problem.get_weight(0, 1)
 #                 mejor_distancia = distancia_vecina
 #                 mejor_solucion = vecina
 #     return mejor_solucion
-
-
 """
 Cambiar la generacion de vencidad, que no sea aleatoria. Que vaya recorriendo de 0 a k los nodos y vaya intercambiando con el siguiente, evalue, si es mejor, guarda y continua hasta el final.
 El truco esta en que la evaluacion no tenga que recorrer de nuevo todos los nodos y calcular, sino que tenga una estructura, puede ser un hash o un arbol binario, que calcule la distancia entre nodos, y cuando se modifique la estructura con el intercambio de un par de nodos, no recalcule todo sino que calcule solo los que se movieron y sus vecinos.
@@ -240,8 +221,8 @@ class Solucion():
     def intercambiar_sublista_invertida(self, inicio: int, fin: int, problem):
         # Complejidad O(n)
         # Los nodos de la sublista son consecutivos, por lo que de la tabla hash de pesos, y de la distancia total, debemos quitar los pesos de los vecinos extremos de la sublsita, y la propia sublista. Quedando: (inicio-1, inicio), (nodos[inicio.....fin]), (nodos[fin], nodos[fin+1])
-
-        lista_invertida = self.solucion[fin:inicio:-1]
+        lista_invertida = self.solucion[inicio:fin]
+        lista_invertida.reverse()
         for i in range(inicio, fin):
             # primero eliminamos el peso calculado para este nodo y sus vecinos. Tambien se resta del total general
             self.eliminar_peso_de_nodo_y_vecinos(i)
@@ -253,6 +234,40 @@ class Solucion():
             self.calcular_y_sumar_peso_nodos_vecinos(i, problem)
 
         return
+
+
+###############################################################################
+# BUSQUEDA ALEATORIA
+###############################################################################
+# region busqueda aleatoria
+def busqueda_aleatoria(problem, N):
+    # N es el numero de iteraciones
+    Nodos = list(problem.get_nodes())
+
+    mejor_solucion = Solucion([])
+    mejor_solucion.distancia_total = float("inf")
+
+    for i in range(N):  # Criterio de parada: repetir N veces pero podemos incluir otros
+        # Genera una solucion aleatoria
+        solucion = Solucion(crear_solucion(Nodos))
+        # Calcula el valor objetivo(distancia total)
+
+        solucion.calcular_pesos(problem)
+        solucion.calcular_distancia_total()
+
+        if solucion.distancia_total < mejor_solucion.distancia_total:  # Compara con la mejor obtenida hasta ahora
+            mejor_solucion = solucion
+
+    # print("Mejor solución:", mejor_solucion.solucion)
+    # print("Distancia     :", mejor_solucion.distancia_total)
+    return mejor_solucion
+
+
+# Busqueda aleatoria con 5000 iteraciones
+# solucion = busqueda_aleatoria(problem, 10000)
+# print(solucion)
+# print()
+# endregion
 
 
 # Algortimo original hecho en clase adaptado al uso de la clase creada para unificar las funciones
@@ -278,21 +293,22 @@ def vecindad_sub_lista_invertida(solucion: Solucion, problem):
     # Condicion de parada sera que llegue al maximo de iteraciones
     # O, consiga una mejor solucion. En este caso, regresara a  la busqueda por entorno variable y volvera a probar con el entorno= 0
     cantidad_iteraciones = 0
-    while(cantidad_iteraciones < len(solucion.solucion) / 2):
+    while(cantidad_iteraciones < len(solucion.solucion) // 2):
         # Determinamos un tamaño de la sublista variable en cada iteracion. Minimo 2
-        length_sub_lista = random.randint(2, len(solucion.solucion) / 2)
+        length_sub_lista = random.randint(2, len(solucion.solucion) // 2)
         # Determinamos aleatoriamente partir de que indice vamos a tomar la sublista
         indice_inicio_sub_lista = random.randint(
-            0, (len(solucion.solucion)-length_sub_lista-1))
+            0, (len(solucion.solucion)-length_sub_lista-2))
         indice_fin_sub_lista = indice_inicio_sub_lista+length_sub_lista
 
         vecina = copy.deepcopy(solucion)
-        vecina.intercambiar_sublista_invertida(indice_inicio_sub_lista, indice_fin_sub_lista, problem)
+        vecina.intercambiar_sublista_invertida(
+            indice_inicio_sub_lista, indice_fin_sub_lista, problem)
 
         # Luego de sustituir por la sublista invertida, pregutnamos si es mejor. y si es asi, retornamos
         if vecina.distancia_total < solucion.distancia_total:
-            #Debug
-            debug_lista_invertida(copy.deepcopy(solucion), Solucion([]), copy.deepcopy(vecina))
+            # Debug
+            # debug_lista_invertida(copy.deepcopy(solucion), Solucion([]), copy.deepcopy(vecina))
             return vecina, True
 
         cantidad_iteraciones += 1
@@ -345,12 +361,11 @@ def busqueda_local_intercambio_nodos(problem, solucion: Solucion):
         solucion_referencia = vecina
 
 
-
-def debug_lista_invertida(original:Solucion, solucion_previa:Solucion, vecina:Solucion):
+def debug_lista_invertida(original: Solucion, solucion_previa: Solucion, vecina: Solucion):
     print(f'Len solucion original: {len(original.solucion)}')
     print(f'Len mejor solucion: {len(solucion_previa.solucion)}')
     print(f'Len vecina: {len(vecina.solucion)}')
-    
+
     original.solucion.sort()
     solucion_previa.solucion.sort()
     vecina.solucion.sort()
@@ -363,8 +378,9 @@ def debug_lista_invertida(original:Solucion, solucion_previa:Solucion, vecina:So
 def busqueda_local_lista_invertida(problem, solucion: Solucion):
     cantidad_iteraciones = 0
     mejor_solucion = copy.deepcopy(solucion)
-    while(cantidad_iteraciones < len(mejor_solucion.solucion) / 2):
-        vecina, movido = vecindad_sub_lista_invertida(copy.deepcopy(mejor_solucion), problem)
+    while(cantidad_iteraciones < len(mejor_solucion.solucion) // 3):
+        vecina, movido = vecindad_sub_lista_invertida(
+            copy.deepcopy(mejor_solucion), problem)
         if movido:
             mejor_solucion = vecina
             cantidad_iteraciones = 0
@@ -373,39 +389,94 @@ def busqueda_local_lista_invertida(problem, solucion: Solucion):
 
     return mejor_solucion
 
+cantidad_nodos = []
+tiempos_busqueda_local_nodos_invertidos = []
+tiempos_busqueda_local_sublista_invertida = []
+tiempos_busqueda_entorno_variable = []
 
-solucion_ejemplo = Solucion([0, 16, 32, 39, 27, 25, 41, 23, 10, 20, 33, 34, 8, 9, 40, 21, 22, 18, 24,
-                            11, 12, 19, 4, 1, 26, 14, 15, 38, 2, 6, 3, 29, 28, 7, 30, 37, 36, 5, 17, 35, 13, 31])
-solucion_ejemplo.calcular_pesos(problem)
+distancias_busqueda_local_nodos_invertidos = []
+distancias_busqueda_local_sublista_invertida = []
+distancias_busqueda_entorno_variable = []
+
+for file in problemas.keys():
+    print(f'Problema {file}')
+    problem = tsplib95.load(file)
+    nodos = list(problem.get_nodes())
+    cantidad_nodos.append(len(nodos))
+
+    solucion_propuesta = busqueda_aleatoria(problem, len(nodos))
+    print("\nSolucion busqueda aleatoria propuesta")
+    print(solucion_propuesta.solucion)
+    print(f'Distancia: {solucion_propuesta.distancia_total}\n')
+
+    time_start = time()
+    print(f'\nSolucion busqueda local monotona con intercambio de nodos: {file}')
+    sol1 = busqueda_local_intercambio_nodos(problem, solucion_propuesta)
+    time_end = time()
+    tiempos_busqueda_local_nodos_invertidos.append(time_end-time_start)
+    distancias_busqueda_local_nodos_invertidos.append(sol1.distancia_total)
+    print("Solución encontrada es:", sol1.solucion)
+    print("Distancia:", sol1.distancia_total)
+    print(f'Tiempo de ejecucion: {time_end-time_start}\n')
+
+    time_start = time()
+    print(f'\nSolucion busqueda local monotona con lista invertida: {file}')
+    sol2 = busqueda_local_lista_invertida(problem, solucion_propuesta)
+    time_end = time()
+    tiempos_busqueda_local_sublista_invertida.append(time_end-time_start)
+    distancias_busqueda_local_sublista_invertida.append(sol2.distancia_total)
+    print("Solución encontrada es:", sol2.solucion)
+    print("Distancia:", sol2.distancia_total)
+    print(f'Tiempo de ejecucion: {time_end-time_start}\n')
+
+    time_start = time()
+    print(f'\nSolucion busqueda por entornos variables descendente (intercambio de nodos + lista invertida): {file}')
+    sol3 = busqueda_por_entornos_variables_descendente(problem, solucion_propuesta)
+    time_end = time()
+    tiempos_busqueda_entorno_variable.append(time_end-time_start)
+    distancias_busqueda_entorno_variable.append(sol3.distancia_total)
+    print("Solución encontrada es:", sol3.solucion)
+    print("Distancia:", sol3.distancia_total)
+    print(f'Tiempo de ejecucion: {time_end-time_start}\n')
 
 
-print("\nSolucion propuesta")
-print(solucion_ejemplo.solucion)
-print(f'Distancia: {solucion_ejemplo.distancia_total}\n')
-aux = [0, 16, 32, 39, 27, 25, 41, 23, 10, 20, 33, 34, 8, 9, 40, 21, 22, 18, 24,11, 12, 19, 4, 1, 26, 14, 15, 38, 2, 6, 3, 29, 28, 7, 30, 37, 36, 5, 17, 35, 13, 31]
-aux.sort()
-print(f'Solucion propuesta ordenada: {aux}')
+fig, (ax1, ax2) = plt.subplots(2, sharex=True, figsize=(100, 100))
+fig.suptitle('Tiempo ejecucion y soluciones encontradas con BL y VND')
 
-time_start = time()
-print("\nSolucion busqueda local monotona con intercambio de nodos")
-sol1 = busqueda_local_intercambio_nodos(problem, solucion_ejemplo)
-time_end = time()
-print("Solución encontrada es:", sol1.solucion)
-print("Distancia:", sol1.distancia_total)
-print(f'Tiempo de ejecucion: {time_end-time_start}\n')
+ax1.set_title("Nº nodos X Tiempo de ejecucion")
+ax1.plot(cantidad_nodos, tiempos_busqueda_local_nodos_invertidos, label="BL monotona con intercambio de nodos")
+ax1.plot(cantidad_nodos, tiempos_busqueda_local_sublista_invertida, label="BL monotona con sublista invertida")
+ax1.plot(cantidad_nodos, tiempos_busqueda_entorno_variable, label="Busqueda por entornos variables descendente")
+ax1.grid()
+ax1.legend(bbox_to_anchor=(1.04, 1))
+# ax1.xla.xlabel("Numero de nodos")  # add X-axis label
+# plt.ylabel("Tiempo ejecucion")  # add Y-axis labe
 
-time_start = time()
-print("\nSolucion busqueda local monotona con lista invertida")
-sol2 = busqueda_local_lista_invertida(problem, solucion_ejemplo)
-time_end = time()
-print("Solución encontrada es:", sol2.solucion)
-print("Distancia:", sol2.distancia_total)
-print(f'Tiempo de ejecucion: {time_end-time_start}\n')
+ax2.set_title("Nº nodos X Distancia solucion")
+ax2.plot(cantidad_nodos, distancias_busqueda_local_nodos_invertidos, label="BL monotona con intercambio de nodos")
+ax2.plot(cantidad_nodos, distancias_busqueda_local_sublista_invertida, label="BL monotona con sublista invertida")
+ax2.plot(cantidad_nodos, distancias_busqueda_entorno_variable, label="Busqueda por entornos variables descendente")
+ax2.grid()
+ax2.legend(bbox_to_anchor=(1.04, 1))
 
-time_start = time()
-print("\nSolucion busqueda por entornos variables descendente (intercambio de nodos + lista invertida)")
-sol3 = busqueda_por_entornos_variables_descendente(problem, solucion_ejemplo)
-time_end = time()
-print("Solución encontrada es:", sol3.solucion)
-print("Distancia:", sol3.distancia_total)
-print(f'Tiempo de ejecucion: {time_end-time_start}\n')
+# fig.legend(loc=1)
+# fig.tight_layout()
+fig.subplots_adjust(right=0.70)
+
+plt.show()
+
+# solucion_ejemplo = Solucion([0, 16, 32, 39, 27, 25, 41, 23, 10, 20, 33, 34, 8, 9, 40, 21, 22, 18, 24,
+#                             11, 12, 19, 4, 1, 26, 14, 15, 38, 2, 6, 3, 29, 28, 7, 30, 37, 36, 5, 17, 35, 13, 31])
+
+# # solucion_ejemplo = Solucion([0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15])
+# solucion_ejemplo.calcular_pesos(problem)
+
+
+# print("\nSolucion propuesta")
+# print(solucion_ejemplo.solucion)
+# print(f'Distancia: {solucion_ejemplo.distancia_total}\n')
+# aux = [0, 16, 32, 39, 27, 25, 41, 23, 10, 20, 33, 34, 8, 9, 40, 21, 22, 18, 24, 11,
+#        12, 19, 4, 1, 26, 14, 15, 38, 2, 6, 3, 29, 28, 7, 30, 37, 36, 5, 17, 35, 13, 31]
+# aux.sort()
+# print(f'Solucion propuesta ordenada: {aux}')
+
